@@ -1,5 +1,6 @@
 import sqlite3
 from sqlite3 import Error
+import random
 
 con = sqlite3.connect('botcontent.db',  check_same_thread=False)
 
@@ -45,21 +46,13 @@ def representate_data(dbdata):
         index = index + 1
     return datalist
 
-def get_books(con, current_id):
+def get_items(con, current_id, category):
     cursorObj = con.cursor()
-    cursorObj.execute("SELECT category, name FROM content WHERE user_id=? AND category=?", (current_id, 'Книга'))
+    cursorObj.execute("SELECT category, name FROM content WHERE user_id=? AND category=?", (current_id, category))
     rows = cursorObj.fetchall()
     for row in rows:
         print (row)
     return rows   
-
-def get_films(con, current_id):
-    cursorObj = con.cursor()
-    cursorObj.execute("SELECT category, name FROM content WHERE user_id=? AND category=?", (current_id, 'Фильм'))
-    rows = cursorObj.fetchall()
-    for row in rows:
-        print (row)
-    return rows  
 
 def find_match_in_db(con, name):
     cursorObj = con.cursor()
@@ -76,3 +69,16 @@ def delete_by_name(con, dbdata):
     cursorObj = con.cursor()
     cursorObj.execute("DELETE FROM content WHERE user_id=? AND name=?", dbdata)
     con.commit()   
+
+def get_random_item(con, current_id, category):
+    cursorObj = con.cursor()
+    cursorObj.execute("SELECT name FROM content WHERE user_id=? AND category=?  ORDER BY random() LIMIT 1", (current_id, category))
+    random_item = cursorObj.fetchall()
+    if category == 'Книга':
+            emoji = '📚'
+    else:
+            emoji = '🎬'
+    answers = ['Как насчет этого?🤔', 'Держи', 'Как тебе такое?', '🤔Может..?']
+    datastring = answers[random.randint(0, len(answers)-1)] + '\n' + emoji + str((random_item[0])[0])+'\n'
+    return datastring
+

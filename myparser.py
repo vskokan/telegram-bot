@@ -8,10 +8,15 @@ def parseInsertion(text):
         return 0
 
 def parseDeletion(text):
-    if text.startswith("Удалить ") or text.startswith("удалить "):
+    if text.startswith("Посмотрел") or text.startswith("посмотрел") or text.startswith("просмотрено") or text.startswith("Просмотрено"):
         newtext = text.split(" ", 1)
+        contentType = 'Фильм'
         contentName = newtext[1]
-        return(contentName)
-    else:
-        return 0
+        return(contentType, contentName)
+    if text.startswith("Прочитал") or text.startswith("прочитал") or text.startswith("прочитано") or text.startswith("Прочитано"):
+        newtext = text.split(" ", 1)
+        contentType = 'Книга'
+        contentName = newtext[1]
+        return(contentType, contentName)
+    return 0
 

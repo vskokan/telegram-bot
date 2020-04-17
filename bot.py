@@ -10,7 +10,7 @@ from telegram import User
 from telegram import Message
 
 REQUEST_KWARGS = {
-    'proxy_url': 'socks5://82.223.120.213:1080',
+    'proxy_url': 'socks5://148.251.234.93:1080',
 }
 updater = Updater(token='1189380390:AAGtbHYKIv_HDlGy4qyaOQ3ukB2GNyY_osE', use_context=True,
                   request_kwargs=REQUEST_KWARGS)
@@ -22,6 +22,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 con = sqlmodule.con
 sqlmodule.create_table(con)
+answer_category = True
 
 def start(update, context):
     #context.bot.send_sticker(chat_id=update.effective_chat.id, sticker='CAACAgIAAxkBAAJEgV6S3HULh2rF6FWtQp1jbx4BgQmzAAI4BAAC6VUFGLPOVS1ipdVcGAQ')
@@ -43,18 +44,17 @@ def viewall(update, context):
     text = ''.join(contentlist)
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
-def viewbooks(update, context):
+def view_items(update, context, category):
     current_id = update.message.from_user.id
-    dbtext = sqlmodule.get_books(con, current_id=current_id)
+    dbtext = sqlmodule.get_items(con, current_id=current_id, category=category)
     contentlist = sqlmodule.representate_data(dbtext)
     text = ''.join(contentlist)
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
-def viewfilms(update, context):
+def random_item(update, context, category):
     current_id = update.message.from_user.id
-    dbtext = sqlmodule.get_films(con, current_id=current_id)
-    contentlist = sqlmodule.representate_data(dbtext)
-    text = ''.join(contentlist)
+    text = sqlmodule.get_random_item(con, current_id=current_id, category=category) 
+    text = text + '\nНе забудь сообщить мне, когда ознакомишься с этим!'
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 def who_are_you(update, context):
@@ -65,11 +65,27 @@ def text_message_processing(update, context):
     text = update.message.text
     if text == 'Кто ты?':
         return who_are_you(update=update, context=context)
-
-    if myparser.parseInsertion(text):
+    elif text.startswith('Привет') or text.startswith('привет'):
+        return start(update=update, context=context)
+    elif text == 'Фильмы' or text == 'фильмы':
+        category = 'Фильм'
+        return view_items(update, context, category=category)    
+    elif text == 'Книги' or text == 'книги':
+        category = 'Книга'
+        return view_items(update, context, category=category) 
+    elif text == 'Всё вместе':
+        return viewall(update=update, context=context)
+    elif text == 'Помощь':
+        return help(update=update, context=context)
+    elif text.startswith('Что посмотреть') or text.startswith('что посмотреть') or text.startswith('посмотреть') or text.startswith('Посмотреть'):
+        category = 'Фильм'
+        return random_item(update, context, category=category)
+    elif text.startswith('Что почитать') or text.startswith('что почитать') or text.startswith('почитать') or text.startswith('Почитатьь'):
+        category = 'Книга'
+        return random_item(update, context, category=category)
+    elif myparser.parseInsertion(text):
         category, name = myparser.parseInsertion(text)
         current_id = update.message.from_user.id
-        #current_chat = update.effective_chat.id
         dbdata = (current_id, category, name)
         sqlmodule.insert_in_db(con,dbdata=dbdata)
         update.message.reply_text(
@@ -78,25 +94,13 @@ def text_message_processing(update, context):
         )
     elif myparser.parseDeletion(text):
         current_id = update.message.from_user.id
-        name = myparser.parseDeletion(text)
-        entranceAmount = sqlmodule.find_match_in_db(con, name=name)[0]
-        #print(sqlmodule.find_match_in_db(con, name=name))
-        if entranceAmount[0] > 1:
-            ask_about_category(update=update, context=context)
-            parsed_category = enter_category(update=update, context=context)
-            if parsed_category != 0:
-                category = parsed_category
-                dbdata = (current_id, category, name)
-                sqlmodule.delete_by_name_and_category(con, dbdata=dbdata)
-            else:
-                pass
-        else:
-            dbdata = (current_id, name)
-            sqlmodule.delete_by_name(con, dbdata=dbdata)
-            update.message.reply_text(
-            text="Удалено!",
+        category, name = myparser.parseDeletion(text)
+        dbdata = (current_id, category, name)
+        sqlmodule.delete_by_name_and_category(con, dbdata=dbdata)
+        update.message.reply_text(
+            text=category +' '+ name + " - " + "удалено из базы данных!",
             reply_markup=my_keyboard,
-            )
+        )
     else:
         update.message.reply_text(
             text="Не понял",
@@ -106,55 +110,39 @@ def text_message_processing(update, context):
 def image_processing(update, context):
     context.bot.send_sticker(chat_id=update.effective_chat.id, sticker='CAACAgIAAxkBAAJEf16S3Dp5mjWXu0NdIbqRft87tfQHAAI7BAAC6VUFGON-fsJ0gbtJGAQ')
     context.bot.send_message(chat_id=update.effective_chat.id, text = 'Я не умею распознавать картинки...')
-
-# НЕ РАБОТАЕТ В СЛУЧАЕ, ЕСЛИ ЕСТЬ СОВПАДЕНИЯ! 
-
-def ask_about_category(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text = 'Книга или фильм?')
-    text = update.message.text
-    if text.startswith("Фильм ") or text.startswith("фильм ") or text.startswith("Книга ") or text.startswith("книга "):
-        context.bot.send_message(chat_id=update.effective_chat.id, text = 'Хммм')
-        return text    
-    #context.bot.register_next_step_handler(msg, enter_category)
-
-def enter_category(update, context):
-    text = update.message.text
-    if text.startswith("Фильм ") or text.startswith("фильм ") or text.startswith("Книга ") or text.startswith("книга "):
-        context.bot.send_message(chat_id=update.effective_chat.id, text = 'Хммм')
-        return text    
-
+ 
 button_start=KeyboardButton('/start')
-button_help=KeyboardButton('/help')
-button_bye=KeyboardButton('/bye')
-button_viewall=KeyboardButton('/viewall')
-button_viewbooks=KeyboardButton('/viewbooks')
-button_viewfilms=KeyboardButton('/viewfilms')
+button_help=KeyboardButton('Помощь')
+button_viewall=KeyboardButton('Всё вместе')
+button_viewbooks=KeyboardButton('Книги')
+button_viewfilms=KeyboardButton('Фильмы')
+button_randomfilm=KeyboardButton('Что посмотреть?')
+button_randombook=KeyboardButton('Что почитать?')
 my_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [
-            button_start,
-            button_help,
-            button_bye,
-            button_viewall,
+            
             button_viewbooks,
             button_viewfilms,
-        ],     
+            button_viewall,
+        ],  
+        [
+            button_randomfilm,
+            button_randombook,
+        ],  
+        [
+            button_help,
+        ], 
     ],
     resize_keyboard=True,
 )
 
 start_handler = CommandHandler('start', start)
-bye_handler = CommandHandler('bye', bye)
 help_handler = CommandHandler('help', help)
 viewall_handler = CommandHandler('viewall', viewall)
-viewbooks_handler = CommandHandler('viewbooks', viewbooks)
-viewfilms_handler = CommandHandler('viewfilms', viewfilms)
 dispatcher.add_handler(start_handler)
-dispatcher.add_handler(bye_handler)
 dispatcher.add_handler(help_handler)
 dispatcher.add_handler(viewall_handler)
-dispatcher.add_handler(viewbooks_handler)
-dispatcher.add_handler(viewfilms_handler)
 dispatcher.add_handler(MessageHandler(filters=Filters.text, callback=text_message_processing))
 dispatcher.add_handler(MessageHandler(filters=Filters.photo, callback=image_processing))
 updater.start_polling()
