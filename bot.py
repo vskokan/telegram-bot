@@ -10,7 +10,7 @@ from telegram import User
 from telegram import Message
 
 REQUEST_KWARGS = {
-    'proxy_url': 'socks5://148.251.234.93:1080',
+    'proxy_url': 'socks5://5.133.217.88:4249',
 }
 updater = Updater(token='1189380390:AAGtbHYKIv_HDlGy4qyaOQ3ukB2GNyY_osE', use_context=True,
                   request_kwargs=REQUEST_KWARGS)
@@ -22,20 +22,14 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 con = sqlmodule.con
 sqlmodule.create_table(con)
-answer_category = True
 
 def start(update, context):
-    #context.bot.send_sticker(chat_id=update.effective_chat.id, sticker='CAACAgIAAxkBAAJEgV6S3HULh2rF6FWtQp1jbx4BgQmzAAI4BAAC6VUFGLPOVS1ipdVcGAQ')
     user = update.message.from_user
     message='Привет, '+ user.first_name
     update.message.reply_text(message, reply_markup=my_keyboard)
 
 def help(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Потом здесь будет список доступных команд и прочее....")
-
-def bye(update, context):
-    context.bot.send_sticker(chat_id=update.effective_chat.id, sticker='CAACAgIAAxkBAAJEg16S3LxeZFxpW6pAe6AX9dY4a33ZAAJIBAAC6VUFGH2PWbP4cz4cGAQ')
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Пока 😔")
+    context.bot.send_message(chat_id=update.effective_chat.id, text="📍Чтобы внести фильм или книгу в базу данных бота, напиши сообщение следующего формата: фильм/книга Название \n Например, фильм Властелин Колец. Категорию можно писать и с большой буквы!  \n 📍Чтобы удалить запись, достаточно написать: прочитано/просмотрено или посмотрел(а)/прочитал(а) и название через пробел \nНапример, посмотрел Властелин Колец  \n📍С помощью кнопок на клавиатуре бота можно просмотреть, что было внесено, по категориям или все вместе  \n📍Список команд:  \n/help \n/viewall \n")
 
 def viewall(update, context):
     current_id = update.message.from_user.id
@@ -54,7 +48,7 @@ def view_items(update, context, category):
 def random_item(update, context, category):
     current_id = update.message.from_user.id
     text = sqlmodule.get_random_item(con, current_id=current_id, category=category) 
-    text = text + '\nНе забудь сообщить мне, когда ознакомишься с этим!'
+    text = text + '\nНе забудь сообщить мне, когда ознакомишься с этим, либо просто решишь удалить'
     context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 def who_are_you(update, context):
@@ -67,34 +61,35 @@ def text_message_processing(update, context):
         return who_are_you(update=update, context=context)
     elif text.startswith('Привет') or text.startswith('привет'):
         return start(update=update, context=context)
-    elif text == 'Фильмы' or text == 'фильмы':
-        category = 'Фильм'
-        return view_items(update, context, category=category)    
-    elif text == 'Книги' or text == 'книги':
-        category = 'Книга'
+    elif myparser.parse_category(text):
+        category = myparser.parse_category(text)
         return view_items(update, context, category=category) 
     elif text == 'Всё вместе':
         return viewall(update=update, context=context)
     elif text == 'Помощь':
         return help(update=update, context=context)
-    elif text.startswith('Что посмотреть') or text.startswith('что посмотреть') or text.startswith('посмотреть') or text.startswith('Посмотреть'):
-        category = 'Фильм'
+    elif myparser.parse_query_to_random_item(text):
+        category = myparser.parse_query_to_random_item(text)
         return random_item(update, context, category=category)
-    elif text.startswith('Что почитать') or text.startswith('что почитать') or text.startswith('почитать') or text.startswith('Почитатьь'):
-        category = 'Книга'
-        return random_item(update, context, category=category)
-    elif myparser.parseInsertion(text):
-        category, name = myparser.parseInsertion(text)
+    elif myparser.parse_insertion(text):
+        category, name = myparser.parse_insertion(text)
         current_id = update.message.from_user.id
-        dbdata = (current_id, category, name)
-        sqlmodule.insert_in_db(con,dbdata=dbdata)
-        update.message.reply_text(
+        dbdata = (name, current_id, category)
+        if  sqlmodule.is_already_exists(con, dbdata):
+            update.message.reply_text(
+                text="Кажется, это уже было внесено...",
+                reply_markup=my_keyboard,
+            )
+        else:  
+            dbdata = (current_id, category, name)
+            sqlmodule.insert_in_db(con,dbdata=dbdata)
+            update.message.reply_text(
             text=update.message.text + " - " + "внесено в базу данных!",
             reply_markup=my_keyboard,
-        )
-    elif myparser.parseDeletion(text):
+            )
+    elif myparser.parse_deletion(text):
         current_id = update.message.from_user.id
-        category, name = myparser.parseDeletion(text)
+        category, name = myparser.parse_deletion(text)
         dbdata = (current_id, category, name)
         sqlmodule.delete_by_name_and_category(con, dbdata=dbdata)
         update.message.reply_text(
@@ -103,7 +98,7 @@ def text_message_processing(update, context):
         )
     else:
         update.message.reply_text(
-            text="Не понял",
+            text="Не понимаю...",
             reply_markup=my_keyboard,
         )
 
