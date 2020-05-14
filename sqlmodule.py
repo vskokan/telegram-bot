@@ -4,7 +4,12 @@ import random
 from kinopoisk.movie import Movie
 import wikipedia
 
+# Connection and creation 
+
 con = sqlite3.connect('botcontent.db',  check_same_thread=False)
+
+sqlite_query = 'undefined'
+values = 'undefined'
 
 def db_connection():
     try:
@@ -12,6 +17,37 @@ def db_connection():
         return con
     except Error:
         print(Error)
+
+
+# User state
+
+def create_table_for_state(con):
+    cursor_obj = con.cursor()
+    cursor_obj.execute("CREATE TABLE IF NOT EXISTS user_state(id integer PRIMARY KEY, user_id text, state text)")
+    con.commit()
+
+def init_state(con, current_id, state):
+    cursor_obj = con.cursor()
+    cursor_obj.execute('''INSERT INTO user_state(user_id, state) VALUES(?,?)''', (current_id, state,))
+    con.commit()
+
+def update_state(con, current_id, state):
+    cursor_obj = con.cursor()
+    cursor_obj.execute("UPDATE user_state SET state=? WHERE user_id=?", (state, current_id, ))
+    con.commit()
+
+def get_state(con, current_id):
+    cursor_obj = con.cursor()
+    cursor_obj.execute("SELECT state FROM user_state WHERE user_id=?", (current_id,))
+    state = cursor_obj.fetchall()
+    return state[0][0]
+
+def reset_user_state(con, current_id):
+    cursor_obj = con.cursor()
+    cursor_obj.execute("DELETE FROM user_state WHERE user_id=?", (current_id,))
+    con.commit()
+
+# Working with content
 
 def create_table(con):
     cursor_obj = con.cursor()
@@ -31,7 +67,6 @@ def get_all_data(con, current_id):
 
 def representate_data(dbdata):
     datalist_length = len(dbdata)
-    print(datalist_length)
     datalist = []
     index = 1
     while index < datalist_length + 1:
@@ -51,18 +86,18 @@ def get_items(con, current_id, category):
     rows = cursor_obj.fetchall()
     return rows   
 
-def find_match_in_db(con, name): #на будущее
+def find_match_in_db(con, name): 
     cursor_obj = con.cursor()
     cursor_obj.execute("SELECT COUNT(*) FROM content WHERE name=?", (name,))
     items_amount = cursor_obj.fetchall()
-    return items_amount
+    return items_amount[0][0]
 
 def delete_by_name_and_category(con, dbdata):
     cursor_obj = con.cursor()
     cursor_obj.execute("DELETE FROM content WHERE user_id=? AND category=? AND name=?", dbdata)
     con.commit()    
 
-def delete_by_name(con, dbdata): #на будущее
+def delete_by_name(con, dbdata): 
     cursor_obj = con.cursor()
     cursor_obj.execute("DELETE FROM content WHERE user_id=? AND name=?", dbdata)
     con.commit()   
@@ -100,3 +135,12 @@ def is_already_exists(con, dbdata):
         return 0
     else:
         return 1
+
+# Function for getting messages 
+
+def get_message(con, tag):
+    cursor_obj = con.cursor()
+    cursor_obj.execute("SELECT message FROM messages WHERE tag=?", (tag,))
+    message = cursor_obj.fetchall()
+    return str((message[0])[0])
+

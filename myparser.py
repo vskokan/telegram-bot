@@ -20,9 +20,16 @@ def parse_deletion(text):
         return(category, name)
     return 0
 
+def parse_deletion_by_name_only(text):
+    if text.startswith("Удалить ") or text.startswith("удалить "):
+        new_text = text.split(" ", 1)
+        name = new_text[1]
+        return name
+    return 0
+
 def parse_category(text):
-    book = ["Книги", "книги"]
-    film = ["Фильмы", "фильмы"]
+    book = ["Книги", "книги", "книга", "Книга"]
+    film = ["Фильмы", "фильмы", "фильм", "Фильм"]
     if text in book:
         category = 'Книга'
         return category
