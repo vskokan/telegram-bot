@@ -14,7 +14,7 @@ import apiai, json
 REQUEST_KWARGS = {
     'proxy_url': 'socks5://5.133.217.88:4249',
 }
-updater = Updater(token='1189380390:AAGtbHYKIv_HDlGy4qyaOQ3ukB2GNyY_osE', use_context=True,
+updater = Updater(token='my token', use_context=True,
                   request_kwargs=REQUEST_KWARGS)
 dispatcher = updater.dispatcher
 
@@ -155,7 +155,7 @@ def image_processing(update, context):
 
 # Function for working with Dialogflow
 def small_talk(update, context):
-    request = apiai.ApiAI('a288b1e5ef9e44f791defd9cad6a639b ').text_request()
+    request = apiai.ApiAI('my token').text_request()
     request.lang = 'ru' 
     request.session_id = 'vmvBot' 
     request.query = update.message.text
