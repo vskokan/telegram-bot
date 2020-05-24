@@ -1,67 +1,57 @@
-import sqlite3
-from sqlite3 import Error
 import random
 from kinopoisk.movie import Movie
 import wikipedia
 
-# Connection and creation 
+import psycopg2
+from psycopg2 import Error
 
-con = sqlite3.connect('botcontent.db',  check_same_thread=False)
-
-sqlite_query = 'undefined'
-values = 'undefined'
-
-def db_connection():
-    try:
-        con = sqlite3.connect('botcontent.db',  check_same_thread=False)
-        return con
-    except Error:
-        print(Error)
-
+con = psycopg2.connect("dbname=bot user=bot_user password=secret")
 
 # User state
 
 def create_table_for_state(con):
     cursor_obj = con.cursor()
-    cursor_obj.execute("CREATE TABLE IF NOT EXISTS user_state(id integer PRIMARY KEY, user_id text, state text)")
+    cursor_obj.execute("CREATE TABLE IF NOT EXISTS user_state (user_id integer PRIMARY KEY, state text)")
     con.commit()
+
+create_table_for_state(con)
 
 def init_state(con, current_id, state):
     cursor_obj = con.cursor()
-    cursor_obj.execute('''INSERT INTO user_state(user_id, state) VALUES(?,?)''', (current_id, state,))
+    cursor_obj.execute("INSERT INTO user_state (user_id, state) VALUES(%s, %s)", (current_id, state,))
     con.commit()
 
 def update_state(con, current_id, state):
     cursor_obj = con.cursor()
-    cursor_obj.execute("UPDATE user_state SET state=? WHERE user_id=?", (state, current_id, ))
+    cursor_obj.execute("UPDATE user_state SET state = %s WHERE user_id = %s", (state, current_id, ))
     con.commit()
 
 def get_state(con, current_id):
     cursor_obj = con.cursor()
-    cursor_obj.execute("SELECT state FROM user_state WHERE user_id=?", (current_id,))
+    cursor_obj.execute("SELECT state FROM user_state WHERE user_id = %s", (current_id,))
     state = cursor_obj.fetchall()
     return state[0][0]
 
 def reset_user_state(con, current_id):
     cursor_obj = con.cursor()
-    cursor_obj.execute("DELETE FROM user_state WHERE user_id=?", (current_id,))
+    cursor_obj.execute("DELETE FROM user_state WHERE user_id = %s", (current_id,))
     con.commit()
 
 # Working with content
 
 def create_table(con):
     cursor_obj = con.cursor()
-    cursor_obj.execute("CREATE TABLE IF NOT EXISTS content(id integer PRIMARY KEY, user_id text, category text, name text)")
+    cursor_obj.execute("CREATE TABLE IF NOT EXISTS content(id serial PRIMARY KEY, user_id integer, category text, name text)")
     con.commit()
 
 def insert_in_db(con, dbdata):
     cursor_obj = con.cursor()
-    cursor_obj.execute('''INSERT INTO content(user_id, category, name) VALUES(?, ?, ?)''', dbdata)
+    cursor_obj.execute("INSERT INTO content(user_id, category, name) VALUES(%s, %s, %s)", dbdata)
     con.commit()
 
 def get_all_data(con, current_id):
     cursor_obj = con.cursor()
-    cursor_obj.execute("SELECT category, name FROM content WHERE user_id=?", (current_id,))
+    cursor_obj.execute("SELECT category, name FROM content WHERE user_id = %s", (current_id,))
     rows = cursor_obj.fetchall()
     return rows
 
@@ -82,29 +72,29 @@ def representate_data(dbdata):
 
 def get_items(con, current_id, category):
     cursor_obj = con.cursor()
-    cursor_obj.execute("SELECT category, name FROM content WHERE user_id=? AND category=?", (current_id, category))
+    cursor_obj.execute("SELECT category, name FROM content WHERE user_id = %s AND category = %s", (current_id, category))
     rows = cursor_obj.fetchall()
     return rows   
 
 def find_match_in_db(con, name): 
     cursor_obj = con.cursor()
-    cursor_obj.execute("SELECT COUNT(*) FROM content WHERE name=?", (name,))
+    cursor_obj.execute("SELECT COUNT(*) FROM content WHERE name = %s", (name,))
     items_amount = cursor_obj.fetchall()
     return items_amount[0][0]
 
 def delete_by_name_and_category(con, dbdata):
     cursor_obj = con.cursor()
-    cursor_obj.execute("DELETE FROM content WHERE user_id=? AND category=? AND name=?", dbdata)
+    cursor_obj.execute("DELETE FROM content WHERE user_id = %s AND category = %s AND name = %s", dbdata)
     con.commit()    
 
 def delete_by_name(con, dbdata): 
     cursor_obj = con.cursor()
-    cursor_obj.execute("DELETE FROM content WHERE user_id=? AND name=?", dbdata)
+    cursor_obj.execute("DELETE FROM content WHERE user_id = %s AND name = %s", dbdata)
     con.commit()   
 
 def get_random_item(con, current_id, category):
     cursor_obj = con.cursor()
-    cursor_obj.execute("SELECT name FROM content WHERE user_id=? AND category=?  ORDER BY random() LIMIT 1", (current_id, category))
+    cursor_obj.execute("SELECT name FROM content WHERE user_id = %s AND category = %s ORDER BY random() LIMIT 1", (current_id, category))
     random_item = cursor_obj.fetchall()
     if category == 'Книга':
             emoji = '📚'
@@ -128,7 +118,7 @@ def get_random_item(con, current_id, category):
 
 def is_already_exists(con, dbdata):
     cursor_obj = con.cursor()
-    cursor_obj.execute("SELECT COUNT(*) FROM content WHERE name=? AND user_id=? AND category=?", dbdata)
+    cursor_obj.execute("SELECT COUNT(*) FROM content WHERE name= %s AND user_id = %s AND category = %s", dbdata)
     item = cursor_obj.fetchall()
     amount = item[0][0]
     if amount==0:
@@ -136,11 +126,19 @@ def is_already_exists(con, dbdata):
     else:
         return 1
 
-# Function for getting messages 
+def has_something(con, current_id, category):
+    cursor_obj = con.cursor()
+    if category == 'all':
+        cursor_obj.execute("SELECT COUNT(*) FROM content WHERE user_id = %s", (current_id,))
+        amount = cursor_obj.fetchall()
+    else:
+        cursor_obj.execute("SELECT COUNT(*) FROM content WHERE user_id = %s AND category = %s", (current_id, category,))
+        amount = cursor_obj.fetchall()  
+    return amount[0][0]
 
+# Function for getting messages 
 def get_message(con, tag):
     cursor_obj = con.cursor()
-    cursor_obj.execute("SELECT message FROM messages WHERE tag=?", (tag,))
+    cursor_obj.execute("SELECT message FROM messages WHERE tag = %s", (tag,))
     message = cursor_obj.fetchall()
     return str((message[0])[0])
-
