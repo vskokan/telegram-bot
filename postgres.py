@@ -5,7 +5,7 @@ import wikipedia
 import psycopg2
 from psycopg2 import Error
 
-con = psycopg2.connect("dbname=bot user=bot_user password=secret")
+con = psycopg2.connect("dbname=dd2j0v3o62h71a user=xbpjvzpfpwvifd password=0dd64fb73d4b8d3aca46e795d24b9bb24486eb5231e45e361c4d7d7fbf282ad6")
 
 # User state
 
