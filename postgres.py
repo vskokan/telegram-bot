@@ -5,7 +5,7 @@ import wikipedia
 import psycopg2
 from psycopg2 import Error
 
-con = psycopg2.connect("dbname=dd2j0v3o62h71a user=xbpjvzpfpwvifd password='' host=ec2-54-246-90-10.eu-west-1.compute.amazonaws.com")
+con = psycopg2.connect("dbname=dd2j0v3o62h71a user=xbpjvzpfpwvifd password=0dd64fb73d4b8d3aca46e795d24b9bb24486eb5231e45e361c4d7d7fbf282ad6 host=ec2-54-246-90-10.eu-west-1.compute.amazonaws.com")
 
 # User state
 
