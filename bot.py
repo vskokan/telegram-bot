@@ -12,9 +12,9 @@ import apiai, json
 
 # Bot connection
 REQUEST_KWARGS = {
-    'proxy_url': 'socks5://138.201.153.200:1080',
+    'proxy_url': 'socks5://212.115.112.60:1080',
 }
-updater = Updater(token='', use_context=True,
+updater = Updater(token='1189380390:AAGV1ke1lrefvfzH7mahZBvnC8JC2BOedw8', use_context=True,
                   request_kwargs=REQUEST_KWARGS)
 dispatcher = updater.dispatcher
 
