@@ -108,7 +108,7 @@ def get_random_item(con, current_id, category):
             while index < len(movie_list)  and index < 5:
                 if str(movie_list[index].rating) !='None':
                     if movie_list[index].rating > 7:
-                        link+="🔎" + str(movie_list[index].title) + " / " + str(movie_list[index].title_en) + "\n Cнято в: " + str(movie_list[index].year) +'\n Рейтинг: ' + str(movie_list[index].rating) +'\n' + "Ссылки на кипопоиск пока недоступны 😔"
+                        link+="🔎" + str(movie_list[index].title) + " / " + str(movie_list[index].title_en) + "\n Cнято в: " + str(movie_list[index].year) +'\n Рейтинг: ' + str(movie_list[index].rating) +'\n' + "Ссылки на кипопоиск пока недоступны 😔 \n"
                 index+=1
             if link == "":
                 link = "\nКажется, на Кинопоиске не нашлось ничего вызывающего доверие (не рассматриваю фильмы с рейтингом ниже 7 ) или просто ничего не нашлось 😕"
