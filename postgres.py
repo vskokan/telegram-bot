@@ -4,8 +4,8 @@ import wikipedia
 
 import psycopg2
 from psycopg2 import Error
-
-con = psycopg2.connect("dbname=dd2j0v3o62h71a user=xbpjvzpfpwvifd password=0dd64fb73d4b8d3aca46e795d24b9bb24486eb5231e45e361c4d7d7fbf282ad6 host=ec2-54-246-90-10.eu-west-1.compute.amazonaws.com")
+# New data for connection can be got by command $ heroku pg:credentials:url -a wrlistbot in GIT
+con = psycopg2.connect("dbname=dlniof4o4g144 user=pexwdycpirtiij password=66b1ff79a1689e2d60714c19ff1a62b82cc58f3309d555fccc3fb95d401bd729 host=ec2-54-247-122-209.eu-west-1.compute.amazonaws.com")
 
 # User state
 
