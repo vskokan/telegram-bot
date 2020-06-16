@@ -76,9 +76,9 @@ def get_items(con, current_id, category):
     rows = cursor_obj.fetchall()
     return rows   
 
-def find_match_in_db(con, name): 
+def find_match_in_db(con, current_id, name): 
     cursor_obj = con.cursor()
-    cursor_obj.execute("SELECT COUNT(*) FROM content WHERE name = %s", (name,))
+    cursor_obj.execute("SELECT COUNT(*) FROM content WHERE current_id = %s AND name = %s", (current_id, name))
     items_amount = cursor_obj.fetchall()
     return items_amount[0][0]
 

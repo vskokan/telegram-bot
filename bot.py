@@ -143,7 +143,7 @@ def text_processing(update, context, text):
     elif myparser.parse_deletion_by_name_only(text):
         current_id = update.message.from_user.id
         name = myparser.parse_deletion_by_name_only(text)
-        if postgres.find_match_in_db(con, name) == 1:
+        if postgres.find_match_in_db(con, current_id, name) == 1:
             dbdata = (current_id, name)
             postgres.delete_by_name(con, dbdata)
             update.message.reply_text(text=name + postgres.get_message(con, tag="del_success"), reply_markup=my_keyboard)
